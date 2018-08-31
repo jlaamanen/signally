@@ -1,0 +1,43 @@
+{
+  "name": "signally",
+  "version": "0.0.1",
+  "description": "Send messages to running Node processes",
+  "author": "Joona Laamanen <joona.laamanen@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jlaamanen/signally.git"
+  },
+  "license": "ISC",
+  "keywords": [
+    "event",
+    "message",
+    "runtime",
+    "node"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "signally": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "tsc",
+    "lint": "tslint --fix -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
+    "prettier": "prettier --write 'src/**/*.ts' 'test/**/*.ts'",
+    "build": "npm run lint && npm run prettier && npm run compile",
+    "watch": "nodemon --watch src -e ts --exec 'npm run build'",
+    "prepare": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^10.9.4",
+    "nodemon": "^1.18.4",
+    "prettier": "^1.14.2",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "typescript": "^3.0.3"
+  }
+}
