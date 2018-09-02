@@ -29,7 +29,12 @@ export function clearDirectory(path: string) {
 }
 
 export function readJsonFile<T extends object = object>(path: string) {
-  return <T>JSON.parse(readFileSync(path).toString());
+  if (!existsSync(path)) {
+    return undefined;
+  }
+  const file = readFileSync(path);
+  // If buffer is empty, the file is not yet ready
+  return file.length > 0 ? <T>JSON.parse(file.toString()) : undefined;
 }
 
 export function getModuleRootPath() {

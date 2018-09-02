@@ -38,3 +38,17 @@ npx signally hello [message]
 # npm script 'send'
 npm run send hello [message]
 ```
+
+## Docker
+
+This example directory also contains `Dockerfile` and `docker-compose.yml` files. To try the Docker version out, start the container with:
+
+```sh
+docker-compose up
+```
+
+Execute a Signally command inside the container with e.g.
+
+```sh
+docker-compose exec example npx signally hello [message]
+```

@@ -1,4 +1,11 @@
-import { watch, existsSync, unlinkSync, rmdirSync, FSWatcher } from "fs";
+import {
+  watch,
+  existsSync,
+  unlinkSync,
+  rmdirSync,
+  FSWatcher,
+  readFileSync
+} from "fs";
 import { resolve } from "path";
 import { clearDirectory, readJsonFile, getModuleRootPath } from "./utils";
 
@@ -44,18 +51,19 @@ function startWatcher() {
   clearDirectory(bufferPath);
   watcher = watch(bufferPath, (event, filename) => {
     const filePath = resolve(bufferPath, filename);
-    if (existsSync(filePath)) {
-      try {
-        const { event, messages } = readJsonFile<Message>(filePath);
+    const fileContents = readJsonFile<Message>(filePath);
+    try {
+      if (fileContents) {
+        const { event, messages } = fileContents;
         listeners.forEach(listener => {
           if (listener.event === event) {
             listener.callback(...messages);
           }
         });
-      } catch (error) {
-        console.error(`Error when handling event ${filename}:`, error);
+        unlinkSync(filePath);
       }
-      unlinkSync(filePath);
+    } catch (error) {
+      console.error(`Error when handling event ${filename}:`, error);
     }
   });
 
