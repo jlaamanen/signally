@@ -1,10 +1,15 @@
 import { writeFileSync, readdirSync, existsSync } from "fs";
-import { queuePath } from "./listener";
+import { bufferPath } from "./listener";
 import { resolve } from "path";
 
+/**
+ * Send an event by adding a new file in the buffer directory.
+ * @param event Event name
+ * @param messages Messages
+ */
 export function send(event: string, ...messages: string[]) {
-  if (!existsSync(queuePath)) {
-    throw Error(`No signally listeners are running (${queuePath} not found)`);
+  if (!existsSync(bufferPath)) {
+    throw Error(`No signally listeners are running (${bufferPath} not found)`);
   }
   if (!event) {
     throw Error("Event must be defined");
@@ -14,10 +19,10 @@ export function send(event: string, ...messages: string[]) {
   writeFileSync(filename, contents);
 }
 
-function getFirstAvailableFilename(index = 1, files = readdirSync(queuePath)) {
+function getFirstAvailableFilename(index = 1, files = readdirSync(bufferPath)) {
   const filename = `${index}`;
   if (files.includes(filename)) {
     return getFirstAvailableFilename(index + 1, files);
   }
-  return resolve(queuePath, filename);
+  return resolve(bufferPath, filename);
 }

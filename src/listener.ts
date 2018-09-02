@@ -1,8 +1,8 @@
 import { watch, existsSync, unlinkSync, rmdirSync, FSWatcher } from "fs";
 import { resolve } from "path";
-import { clearDirectory, readJsonFile } from "./utils";
+import { clearDirectory, readJsonFile, getModuleRootPath } from "./utils";
 
-export const queuePath = resolve(".signally");
+export const bufferPath = resolve(getModuleRootPath(), ".buffer");
 
 let watcher: FSWatcher;
 const listeners: Listener[] = [];
@@ -17,6 +17,13 @@ export interface Message {
   messages: string[];
 }
 
+/**
+ * Adds a listener for given event name.
+ * When an event with given name is received, the callback is invoked
+ * with the messages as arguments.
+ * @param event Event name
+ * @param callback Callback function
+ */
 export function addListener(
   event: string,
   callback: (...messages: string[]) => void
@@ -34,9 +41,9 @@ export function addListener(
 }
 
 function startWatcher() {
-  clearDirectory(queuePath);
-  watcher = watch(queuePath, (event, filename) => {
-    const filePath = resolve(queuePath, filename);
+  clearDirectory(bufferPath);
+  watcher = watch(bufferPath, (event, filename) => {
+    const filePath = resolve(bufferPath, filename);
     if (existsSync(filePath)) {
       try {
         const { event, messages } = readJsonFile<Message>(filePath);
@@ -55,7 +62,7 @@ function startWatcher() {
   // Clean up on process exit
   process.on("exit", () => {
     watcher.close();
-    clearDirectory(queuePath);
-    rmdirSync(queuePath);
+    clearDirectory(bufferPath);
+    rmdirSync(bufferPath);
   });
 }

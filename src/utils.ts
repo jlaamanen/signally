@@ -31,3 +31,7 @@ export function clearDirectory(path: string) {
 export function readJsonFile<T extends object = object>(path: string) {
   return <T>JSON.parse(readFileSync(path).toString());
 }
+
+export function getModuleRootPath() {
+  return resolve(__dirname, "..");
+}
