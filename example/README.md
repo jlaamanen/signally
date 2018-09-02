@@ -44,7 +44,11 @@ npm run send hello [message]
 This example directory also contains `Dockerfile` and `docker-compose.yml` files. To try the Docker version out, start the container with:
 
 ```sh
+# attached:
 docker-compose up
+
+# ...or detached:
+docker-compose up -d
 ```
 
 Execute a Signally command inside the container with e.g.

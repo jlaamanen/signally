@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@types/node": "^10.9.4",
-    "signally": "^0.0.1",
+    "signally": "^0.0.3",
     "ts-node": "^7.0.1",
     "typescript": "^3.0.3"
   }
