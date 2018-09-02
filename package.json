@@ -1,6 +1,6 @@
 {
   "name": "signally",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Send messages to running Node processes",
   "author": "Joona Laamanen <joona.laamanen@gmail.com>",
   "repository": {
