@@ -25,7 +25,7 @@ Node doesn't offer a nice and simple way to send events or messages to running N
 3. Run your app
 4. Send an event with Signally CLI command
     ```sh
-    signally hello world
+    npx signally hello world
     ```
     ```sh
     # Node process output:
@@ -79,7 +79,6 @@ Used by the CLI command, but can also be imported and invoked programmatically.
 You can use the Signally CLI via:
 * npm scripts in `package.json`
 * `npx signally [arguments]`
-* installing globally with `npm i -g signally` (not recommended)
 
 Signally CLI takes one or more arguments:
 ```sh
@@ -94,7 +93,7 @@ signally <event> [<message1> <message2> ...]
 
 ## Tips & tricks
 
-* To avoid having to install Signally globally, prefer `npx` or npm scripts
+* Signally has a module specific buffer directory, so installing it globally won't work
 * Remember to wrap messages in quotation marks when needed (depending on your terminal)
 * To allow Signally to clean up properly, call `process.exit()` on signals like `SIGINT` (Ctrl + C)
-  * Signally contains a handler for the `exit` event for clearing up and removing the `.signally` buffer directory
+  * Signally contains a handler for the `exit` event for clearing up and removing its buffer directory
