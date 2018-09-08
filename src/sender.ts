@@ -1,6 +1,9 @@
 import { writeFileSync, readdirSync, existsSync } from "fs";
-import { bufferPath } from "./listener";
 import { resolve } from "path";
+import { getCallerPackageRootPath } from "./utils";
+import { bufferDirName } from "./config";
+
+const bufferPath = resolve(getCallerPackageRootPath(), bufferDirName);
 
 /**
  * Send an event by adding a new file in the buffer directory.
@@ -19,10 +22,17 @@ export function send(event: string, ...messages: string[]) {
   writeFileSync(filename, contents);
 }
 
-function getFirstAvailableFilename(index = 1, files = readdirSync(bufferPath)) {
-  const filename = `${index}`;
-  if (files.includes(filename)) {
-    return getFirstAvailableFilename(index + 1, files);
-  }
+/**
+ * Gets first available buffer file name.
+ * Starting from "1", tries to find the first available number as
+ * the file name.
+ */
+function getFirstAvailableFilename() {
+  let index = 1;
+  let filename = "";
+  const files = readdirSync(bufferPath);
+  do {
+    filename = `${index++}`;
+  } while (files.includes(filename));
   return resolve(bufferPath, filename);
 }

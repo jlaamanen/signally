@@ -1,15 +1,13 @@
-import {
-  watch,
-  existsSync,
-  unlinkSync,
-  rmdirSync,
-  FSWatcher,
-  readFileSync
-} from "fs";
+import { watch, unlinkSync, rmdirSync, FSWatcher } from "fs";
 import { resolve } from "path";
-import { clearDirectory, readJsonFile, getModuleRootPath } from "./utils";
+import {
+  clearDirectory,
+  readJsonFile,
+  getCallerPackageRootPath
+} from "./utils";
+import { bufferDirName } from "./config";
 
-export const bufferPath = resolve(getModuleRootPath(), ".buffer");
+export const bufferPath = resolve(getCallerPackageRootPath(), bufferDirName);
 
 let watcher: FSWatcher;
 const listeners: Listener[] = [];
@@ -47,6 +45,9 @@ export function addListener(
   listeners.push({ event, callback });
 }
 
+/**
+ * Starts a file watcher for new signally events in buffer directory.
+ */
 function startWatcher() {
   clearDirectory(bufferPath);
   watcher = watch(bufferPath, (event, filename) => {
