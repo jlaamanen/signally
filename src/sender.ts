@@ -14,11 +14,14 @@ export function send(event: string, ...messages: string[]) {
   if (!existsSync(bufferPath)) {
     throw Error(`No signally listeners are running (${bufferPath} not found)`);
   }
+  if (!existsSync(resolve(bufferPath, event))) {
+    throw Error(`No signally listener found for event '${event}'`);
+  }
   if (!event) {
     throw Error("Event must be defined");
   }
   const contents = JSON.stringify({ event, messages });
-  const filename = getFirstAvailableFilename();
+  const filename = getFirstAvailableFilename(event);
   writeFileSync(filename, contents);
 }
 
@@ -27,12 +30,13 @@ export function send(event: string, ...messages: string[]) {
  * Starting from "1", tries to find the first available number as
  * the file name.
  */
-function getFirstAvailableFilename() {
+function getFirstAvailableFilename(eventName: string) {
   let index = 1;
   let filename = "";
-  const files = readdirSync(bufferPath);
+  const eventBufferPath = resolve(bufferPath, eventName);
+  const files = readdirSync(eventBufferPath);
   do {
     filename = `${index++}`;
   } while (files.includes(filename));
-  return resolve(bufferPath, filename);
+  return resolve(eventBufferPath, filename);
 }

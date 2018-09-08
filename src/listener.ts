@@ -1,4 +1,4 @@
-import { watch, unlinkSync, rmdirSync, FSWatcher } from "fs";
+import { watch, unlinkSync, rmdirSync, FSWatcher, existsSync } from "fs";
 import { resolve } from "path";
 import {
   clearDirectory,
@@ -9,7 +9,7 @@ import { bufferDirName } from "./config";
 
 export const bufferPath = resolve(getCallerPackageRootPath(), bufferDirName);
 
-let watcher: FSWatcher;
+const watchers: { [eventName: string]: FSWatcher } = {};
 const listeners: Listener[] = [];
 
 export interface Listener {
@@ -39,8 +39,9 @@ export function addListener(
   if (!callback) {
     throw Error("Callback must be defined");
   }
-  if (!watcher) {
-    startWatcher();
+  // TODO: event name validation
+  if (!watchers[event]) {
+    startWatcher(event);
   }
   listeners.push({ event, callback });
 }
@@ -48,10 +49,14 @@ export function addListener(
 /**
  * Starts a file watcher for new signally events in buffer directory.
  */
-function startWatcher() {
-  clearDirectory(bufferPath);
-  watcher = watch(bufferPath, (event, filename) => {
-    const filePath = resolve(bufferPath, filename);
+function startWatcher(eventName: string) {
+  if (!existsSync(bufferPath)) {
+    clearDirectory(bufferPath);
+  }
+  const eventBufferPath = resolve(bufferPath, eventName);
+  clearDirectory(eventBufferPath);
+  watchers[eventName] = watch(eventBufferPath, (event, filename) => {
+    const filePath = resolve(eventBufferPath, filename);
     const fileContents = readJsonFile<Message>(filePath);
     try {
       if (fileContents) {
@@ -64,13 +69,18 @@ function startWatcher() {
         unlinkSync(filePath);
       }
     } catch (error) {
-      console.error(`Error when handling event ${filename}:`, error);
+      console.error(
+        `Error when handling event ${eventName} / ${filename}:`,
+        error
+      );
     }
   });
 
   // Clean up on process exit
   process.on("exit", () => {
-    watcher.close();
+    Object.values(watchers).forEach(watcher => {
+      watcher.close();
+    });
     clearDirectory(bufferPath);
     rmdirSync(bufferPath);
   });
