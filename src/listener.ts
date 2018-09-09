@@ -1,87 +1,112 @@
-import { watch, unlinkSync, rmdirSync, FSWatcher, existsSync } from "fs";
+import { watch, unlinkSync, FSWatcher, existsSync, rmdir } from "fs";
 import { resolve } from "path";
 import {
   clearDirectory,
   readJsonFile,
-  getCallerPackageRootPath
+  getCallerPackageRootPath,
+  rmdirRecursive,
+  encodeEventName
 } from "./utils";
 import { bufferDirName } from "./config";
+import { SignallyError } from "./error";
 
 export const bufferPath = resolve(getCallerPackageRootPath(), bufferDirName);
 
-const watchers: { [eventName: string]: FSWatcher } = {};
-const listeners: Listener[] = [];
+type ListenerCallback = (...messages: string[]) => void;
 
-export interface Listener {
-  event: string;
-  callback: (...messages: string[]) => void;
+interface EventListener {
+  watcher: FSWatcher;
+  callbacks: ListenerCallback[];
 }
 
-export interface Message {
-  event: string;
-  messages: string[];
-}
+let listeners: {
+  [eventName: string]: EventListener;
+} = {};
 
 /**
  * Adds a listener for given event name.
  * When an event with given name is received, the callback is invoked
  * with the messages as arguments.
- * @param event Event name
+ * @param eventName Event name
  * @param callback Callback function
  */
 export function addListener(
-  event: string,
+  eventName: string,
   callback: (...messages: string[]) => void
 ) {
-  if (!event) {
-    throw Error("Event must be defined");
+  if (!eventName) {
+    throw SignallyError.EVENT_NAME_NOT_DEFINED();
   }
   if (!callback) {
-    throw Error("Callback must be defined");
+    throw SignallyError.CALLBACK_NOT_DEFINED();
   }
-  // TODO: event name validation
-  if (!watchers[event]) {
-    startWatcher(event);
+  if (Object.entries(listeners).length === 0) {
+    // Register clean up handler when adding first listener
+    registerCleanUpHandler();
   }
-  listeners.push({ event, callback });
+  if (!listeners[eventName]) {
+    // Start watcher for the event, if it doesn't yet exist
+    listeners[eventName] = {
+      watcher: startWatcher(eventName),
+      callbacks: []
+    };
+  }
+  listeners[eventName].callbacks.push(callback);
+}
+
+/**
+ * Removes all listeners for given event name.
+ * @param eventName
+ */
+export function removeListeners(eventName: string) {
+  if (!listeners[eventName]) {
+    throw SignallyError.LISTENER_DOES_NOT_EXIST(eventName);
+  }
+  listeners[eventName].watcher.close();
+  rmdirRecursive(resolve(bufferPath, encodeEventName(eventName)));
+  delete listeners[eventName];
+}
+
+/**
+ * Removes all Signally listeners and cleans up the buffer directory.
+ */
+export function removeAllListeners() {
+  Object.values(listeners).forEach(listener => {
+    listener.watcher.close();
+  });
+  rmdirRecursive(bufferPath);
+  listeners = {};
 }
 
 /**
  * Starts a file watcher for new signally events in buffer directory.
+ * @param eventName Event name
+ * @returns File watcher for the event
  */
 function startWatcher(eventName: string) {
   if (!existsSync(bufferPath)) {
     clearDirectory(bufferPath);
   }
-  const eventBufferPath = resolve(bufferPath, eventName);
+  const eventBufferPath = resolve(bufferPath, encodeEventName(eventName));
   clearDirectory(eventBufferPath);
-  watchers[eventName] = watch(eventBufferPath, (event, filename) => {
+  return watch(eventBufferPath, (_, filename) => {
     const filePath = resolve(eventBufferPath, filename);
-    const fileContents = readJsonFile<Message>(filePath);
-    try {
-      if (fileContents) {
-        const { event, messages } = fileContents;
-        listeners.forEach(listener => {
-          if (listener.event === event) {
-            listener.callback(...messages);
-          }
-        });
-        unlinkSync(filePath);
-      }
-    } catch (error) {
-      console.error(
-        `Error when handling event ${eventName} / ${filename}:`,
-        error
-      );
+    const messages = readJsonFile<string[]>(filePath);
+    if (messages) {
+      listeners[eventName].callbacks.forEach(callback => {
+        callback(...messages);
+      });
+      unlinkSync(filePath);
     }
   });
+}
 
-  // Clean up on process exit
+/**
+ * Registers a clean-up function on process exit.
+ * Stops file watchers and cleans up buffer directories.
+ */
+function registerCleanUpHandler() {
   process.on("exit", () => {
-    Object.values(watchers).forEach(watcher => {
-      watcher.close();
-    });
-    clearDirectory(bufferPath);
-    rmdirSync(bufferPath);
+    removeAllListeners();
   });
 }
