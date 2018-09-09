@@ -4,6 +4,8 @@ Send messages to your Node process on the run with Signally! ⚡️
 
 [![Published on npm](https://img.shields.io/npm/v/signally.svg)](https://www.npmjs.com/package/signally)
 
+🚧 **Warning: experimental module in pre-release phase (v0.0.x), breaking changes may occur!** 🚧
+
 ## Why?
 
 Node doesn't offer a nice and simple way to send events or messages to running Node processes out-of-the-box.
@@ -41,7 +43,7 @@ Signally uses a simple file watching message queue to watch for new events. Each
 ### addListener
 
 ```ts
-addListener(event: string, callback: (...messages: string[]) => void)
+addListener(eventName: string, callback: (...messages: string[]) => void)
 ```
 
 Adds a listener for given event name. When an event with given name is received, the callback is invoked with the messages as arguments.
@@ -64,13 +66,35 @@ addListener("exhaustive-event", (...messages) => {
 });
 ```
 
+Also creates a buffer directory (`.signally`) to the package root of the calling package.
+
+### removeListeners
+
+```ts
+removeListeners(eventName: string)
+```
+
+Removes all listeners added for given event name and removes the event's buffer directory.
+
+Throws an error, if the given event name is not listened to.
+
+### removeAllListeners
+
+```ts
+removeAllListeners()
+```
+
+Removes all existing Signally listeners and removes up the entire buffer directory.
+
 ### send
 
 ```ts
-send(event: string, ...messages: string[])
+send(eventName: string, ...messages: string[])
 ```
 
 Send an event by adding a new file in the buffer directory.
+
+Throws an error, if the given event name is not listened to.
 
 Used by the CLI command, but can also be imported and invoked programmatically.
 
