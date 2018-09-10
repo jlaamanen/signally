@@ -4,7 +4,7 @@ Send messages to your Node process on the run with Signally! ⚡️
 
 [![Published on npm](https://img.shields.io/npm/v/signally.svg)](https://www.npmjs.com/package/signally)
 
-🚧 **Warning: experimental module in pre-release phase (v0.0.x), breaking changes may occur!** 🚧
+🚧 **Warning: experimental package in pre-release phase (v0.0.x), breaking changes may occur!** 🚧
 
 ## Why?
 
